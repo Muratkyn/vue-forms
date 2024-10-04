@@ -1,5 +1,9 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import VueForm from "./components/VueForm.vue";
+</script>
 
-<template></template>
+<template>
+  <VueForm />
+</template>
 
 <style scoped></style>
