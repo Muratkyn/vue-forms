@@ -3,7 +3,7 @@ import VueForm from "./components/VueForm.vue";
 </script>
 
 <template>
-  <VueForm />
+  <RouterView></RouterView>
 </template>
 
 <style scoped></style>

@@ -1,0 +1,222 @@
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 4rem auto;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .container-wrapper {
+    display: flex;
+    flex-flow: column;
+    margin-left: 8%;
+    max-width: 100%;
+  }
+  
+  h1 {
+    font-size: 2.125rem;
+  }
+  hr {
+    width: 70px;
+    height: 0.2rem;
+    background-color: #46a610;
+    margin: 0;
+  }
+  p {
+    font-size: 1.2rem;
+    display: block;
+  }
+  
+  @media screen and (min-width: 1024px) {
+    #app h1 {
+      font-size: 2.5rem;
+      line-height: 1.36;
+    }
+  }
+  .table-container {
+    display: flex;
+    flex-flow: row wrap;
+  }
+  .table-container2 {
+    display: flex;
+    flex-flow: row wrap;
+  }
+  .firstItem-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 45%;
+  }
+  
+  .firstItem-wrapper:last-child {
+    flex-basis: 90%;
+  }
+  
+  @media screen and (max-width: 768px) {
+    .firstItem-wrapper,
+    .secondItem-wrapper {
+      flex-basis: 90%;
+      margin-right: 0;
+    }
+  
+    #app button {
+      width: auto;
+    }
+  
+    .upload-button {
+      width: auto;
+    }
+  
+    .secondItem-wrapper {
+      flex-basis: 80%;
+    }
+  }
+  
+  .secondItem-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .input-field {
+    padding: 1rem;
+    margin: 4px;
+    border-radius: 4px;
+    border-style: none;
+    border: rgb(59, 58, 58) solid 1px;
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+    transition: 0.3s ease;
+    background-color: white;
+    margin-right: 1rem;
+  }
+  
+  .input-field:focus {
+    outline: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .text-info {
+    font-size: small;
+    font-size: 0.75rem;
+    color: #666;
+    margin-left: 3px;
+  }
+  label {
+    margin-left: 0.2rem;
+  }
+  span {
+    font-size: 0.75rem;
+    color: #666;
+  }
+  
+  .upload-container {
+    margin-top: 5%;
+  }
+  
+  .request-inputs {
+    display: flex;
+    justify-content: center;
+    flex-flow: column wrap;
+    width: 1000px;
+  }
+  .upload-button {
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    width: 300px;
+    height: 40px;
+    justify-content: center;
+    align-items: center;
+    color: #188803;
+    background: white;
+    padding: 1rem;
+    margin: 4px;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 4px;
+    border-radius: 4px;
+    border: solid 2px #188803;
+  }
+  
+  .uploaded-image__container {
+    display: flex;
+    width: 98.5%;
+    height: 20%;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #e6e6e6;
+    margin-top: 2px;
+    padding-left: 8px;
+  }
+  .button-group {
+    display: flex;
+    height: 100%;
+    gap: 6px;
+  }
+  .upload-image__delete {
+    height: 100%;
+  }
+  .condition-input {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+  }
+  
+  .input-field__request {
+    padding: 1rem;
+    margin: 4px;
+    border-radius: 4px;
+    border-style: none;
+    border: rgb(59, 58, 58) solid 1px;
+    transition: 0.3s ease;
+    background-color: white;
+    width: auto;
+  }
+  
+  .send-request {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 3rem;
+    cursor: pointer;
+  }
+  
+  .request-button {
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    background: #188803;
+    padding: 1rem;
+    border-radius: 4px;
+    border: solid 2px #188803;
+    width: 40%;
+    cursor: pointer;
+  }
+  
+  .request-button:disabled {
+    background-color: #cccccc;
+    border: #666666;
+    color: #666666;
+    cursor: not-allowed;
+  }
+  
+  @media screen and (max-width: 1300px) {
+    .firstItem-wrapper,
+    .secondItem-wrapper {
+      flex-basis: 90%;
+      margin-right: 4.5%;
+    }
+  }
+  
+  .error-message {
+    color: rgb(155, 14, 14);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    margin-left: 4px;
+  }
+  
+  .errorsMessage {
+    border: solid 2px rgb(155, 14, 14);
+  }
