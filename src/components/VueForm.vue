@@ -21,8 +21,12 @@
           <input
             type="text"
             class="input-field"
+            :class="{errorsMessage: errors[field.name as keyof Data]}"
             v-model="data[field.name as keyof Data]"
           />
+          <p v-if="errors[field.name as keyof Data]" class="error-message">
+            {{ errors[field.name as keyof Data] }}
+          </p>
         </div>
       </div>
       <p>Tipo di richiesta</p>
@@ -86,12 +90,26 @@
               multiple
               @change="(event) => handleFileUpload(event)"
             />
-            <div v-for="image in data.customerImage">
+            <p v-if="errors.customerImage" class="error-message">
+              {{ errors.customerImage }}
+            </p>
+            <div
+              v-for="image in data.customerImage"
+              class="uploaded-image__container"
+            >
               <p>{{ image.name }}</p>
-              <button></button>
+              <div class="button-group">
+                <button>Ok</button>
+                <button
+                  @click="removeImage(image)"
+                  class="upload-image__delete"
+                >
+                  Del
+                </button>
+              </div>
             </div>
             <div class="condition-input">
-              <input type="checkbox" />
+              <input type="checkbox" v-model="data.checked" />
               <p>
                 Per inviare la richiesta conferma di aver letto
                 <a
@@ -106,7 +124,13 @@
         </div>
       </div>
       <div class="send-request">
-        <button class="request-button">Invia richiesta</button>
+        <button
+          class="request-button"
+          :disabled="!enableButton"
+          @click="sendRequest"
+        >
+          Invia richiesta
+        </button>
       </div>
     </div>
   </div>
@@ -115,24 +139,23 @@
 <script setup lang="ts">
 import { customerData } from "@/constants";
 import { requestType } from "@/constants";
-import { ref, watch } from "vue";
+import { customerSchema } from "@/schema";
+import router from "@/router";
+import type { Data } from "@/types";
+import { computed, onMounted, ref, watch } from "vue";
+import "@/components/VueForm.css";
 
-type Data = {
-  customerName: string;
-  customerLastName: string;
-  customerEmail: string;
-  customerPhone: string;
-  customerNegozio: string;
-  requestType: string;
-  requestSpecific: string;
-  customerImage: File[];
-};
-
-const handleSelectChange = (requestTypeName: string) => {
-  options.value = requestType.selections.find(
-    (el) => el.name === requestTypeName
-  )!.options;
-};
+const errors = ref<Record<keyof Data, string>>({
+  customerName: "",
+  customerLastName: "",
+  customerEmail: "",
+  customerPhone: "",
+  customerNegozio: "",
+  requestType: "",
+  requestSpecific: "",
+  customerImage: "",
+  checked: "",
+});
 
 const data = ref<Data>({
   customerName: "",
@@ -143,9 +166,41 @@ const data = ref<Data>({
   requestType: "",
   requestSpecific: "",
   customerImage: [] as File[],
+  checked: false,
 });
 
+onMounted(() => {
+  const params = new URLSearchParams(window.location.search);
+  const cn = params.get("cn");
+  const cs = params.get("cs");
+
+  if (cn) {
+    data.value.customerName = cn;
+  }
+  if (cs) {
+    data.value.customerLastName = cs;
+  }
+});
+
+const handleSelectChange = (requestTypeName: string) => {
+  options.value = requestType.selections.find(
+    (el) => el.name === requestTypeName
+  )!.options;
+};
+const options = ref<{ name: string; label: string; value: string }[]>([]);
+
 const fileInput = ref<HTMLInputElement>();
+
+const enableButton = computed(() => {
+  return (
+    Object.values(data.value).every((val) => {
+      if (Array.isArray(val)) {
+        return val.length > 0;
+      }
+      return val !== "" && val !== null;
+    }) && data.value.checked
+  );
+});
 
 const uploadDocument = () => {
   fileInput.value!.click();
@@ -154,197 +209,69 @@ const uploadDocument = () => {
 const handleFileUpload = (event: Event) => {
   const files = (event.target as HTMLInputElement).files;
   if (!files) return;
+
   const selectedFiles = Array.from(files);
+  const maxSize = 6 * 1024 * 1024;
+
+  const validFiles = ["application/pdf", "image/jpeg", "image/png"];
+  const largeFile = selectedFiles.filter((file) => file.size > maxSize);
+  const invalidFileTypes = selectedFiles.filter(
+    (file) => !validFiles.includes(file.type)
+  );
+
+  if (largeFile.length > 0) {
+    errors.value.customerImage = "file supera la dimensione massima di 6MB.";
+    return;
+  }
+
+  if (invalidFileTypes.length > 0) {
+    errors.value.customerImage =
+      "File non valido. Formati accettati: PDF, JPG, JPEG, PNG.";
+    return;
+  }
+
+  errors.value.customerImage = "";
   data.value.customerImage.push(...selectedFiles);
 };
-const options = ref<{ name: string; label: string; value: number }[]>([]);
+
+const removeImage = (img: File) => {
+  data.value.customerImage = data.value.customerImage.filter(
+    (image) => image.name !== img.name
+  );
+};
+
+const sendRequest = () => {
+  const validation = customerSchema.safeParse(data.value);
+
+  Object.keys(errors.value).forEach((key) => {
+    errors.value[key as keyof Data] = "";
+  });
+
+  if (!validation.success) {
+    validation.error.errors.forEach((error) => {
+      console.log(error.path, "path");
+      const fieldName = error.path[0] as keyof Data;
+      console.log(fieldName, ".......");
+      errors.value[fieldName] = error.message;
+    });
+
+    console.log("Validation errors:", errors.value);
+    return;
+  }
+
+  router.push({
+    path: "/summary",
+    query: {
+      customerName: data.value.customerName,
+      customerLastName: data.value.customerLastName,
+      customerEmail: data.value.customerEmail,
+      customerPhone: data.value.customerPhone,
+      customerNegozio: data.value.customerNegozio,
+      requestType: data.value.requestType,
+      requestSpecific: data.value.requestSpecific,
+    },
+  });
+};
 
 watch(data.value, (newVal, oldVal) => console.log(newVal));
 </script>
-
-<style scoped>
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 4rem auto;
-  box-sizing: border-box;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-.container-wrapper {
-  display: flex;
-  flex-flow: column;
-  margin-left: 8%;
-  max-width: 100%;
-}
-
-h1 {
-  font-size: 2.125rem;
-}
-hr {
-  width: 70px;
-  height: 0.2rem;
-  background-color: #46a610;
-  margin: 0;
-}
-p {
-  font-size: 1.2rem;
-  display: block;
-}
-
-@media screen and (min-width: 1024px) {
-  #app h1 {
-    font-size: 2.5rem;
-    line-height: 1.36;
-  }
-}
-.table-container {
-  display: flex;
-  flex-flow: row wrap;
-}
-.table-container2 {
-  display: flex;
-  flex-flow: row wrap;
-}
-.firstItem-wrapper {
-  display: flex;
-  flex-direction: column;
-  flex-basis: 45%;
-}
-
-.firstItem-wrapper:last-child {
-  flex-basis: 90%;
-}
-
-@media screen and (max-width: 768px) {
-  .firstItem-wrapper,
-  .secondItem-wrapper {
-    flex-basis: 90%;
-    margin-right: 0;
-  }
-
-  #app button {
-    width: auto;
-  }
-
-  .upload-button {
-    width: auto;
-  }
-
-  .secondItem-wrapper {
-    flex-basis: 80%;
-  }
-}
-
-.secondItem-wrapper {
-  display: flex;
-  flex-direction: column;
-}
-
-.input-field {
-  padding: 1rem;
-  margin: 4px;
-  border-radius: 4px;
-  border-style: none;
-  border: rgb(59, 58, 58) solid 1px;
-  /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
-  transition: 0.3s ease;
-  background-color: white;
-  margin-right: 1rem;
-}
-
-.input-field:focus {
-  outline: none;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.text-info {
-  font-size: small;
-  font-size: 0.75rem;
-  color: #666;
-  margin-left: 3px;
-}
-label {
-  margin-left: 0.2rem;
-}
-span {
-  font-size: 0.75rem;
-  color: #666;
-}
-
-.upload-container {
-  margin-top: 5%;
-}
-
-.request-inputs {
-  display: flex;
-  justify-content: center;
-  flex-flow: column wrap;
-  width: 1000px;
-}
-.upload-button {
-  font-weight: 600;
-  font-size: 0.85rem;
-  display: flex;
-  width: 300px;
-  height: 40px;
-  justify-content: center;
-  align-items: center;
-  color: #188803;
-  background: white;
-  padding: 1rem;
-  margin: 4px;
-  border-radius: 4px;
-  padding: 1rem;
-  margin: 4px;
-  border-radius: 4px;
-  border: solid 2px #188803;
-}
-
-.condition-input {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-}
-
-.input-field__request {
-  padding: 1rem;
-  margin: 4px;
-  border-radius: 4px;
-  border-style: none;
-  border: rgb(59, 58, 58) solid 1px;
-  transition: 0.3s ease;
-  background-color: white;
-  width: auto;
-}
-
-.send-request {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-top: 3rem;
-}
-
-.request-button {
-  font-weight: 600;
-  font-size: 0.85rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  background: #188803;
-  padding: 1rem;
-  border-radius: 4px;
-  border: solid 2px #188803;
-  width: 40%;
-}
-
-@media screen and (max-width: 1300px) {
-  .firstItem-wrapper,
-  .secondItem-wrapper {
-    flex-basis: 90%;
-    margin-right: 4.5%;
-  }
-}
-</style>
