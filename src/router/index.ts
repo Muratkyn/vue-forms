@@ -6,14 +6,9 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: "/home",
+      path: "/",
       name: "home",
       component: VueForm,
-    },
-    {
-      path: "/summary",
-      name: "summary",
-      component: SummaryPage,
     },
   ],
 });
