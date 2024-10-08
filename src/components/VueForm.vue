@@ -127,7 +127,7 @@
       <div class="send-request">
         <button
           class="request-button"
-          :disabled="!enableButton"
+          :disabled="!enableButton || !isImageMax"
           @click="sendRequest"
         >
           Invia richiesta
@@ -220,6 +220,15 @@ const enableButton = computed(() => {
       return val !== "" && val !== null;
     }) && data.value.checked
   );
+});
+
+const isImageMax = computed(() => {
+  const maxSize = 6 * 1024 * 1024;
+  const totalFileSize = data.value.customerImage.reduce(
+    (acc, curr) => acc + curr.size,
+    0
+  );
+  return totalFileSize <= maxSize;
 });
 
 const fileInput = ref<HTMLInputElement>();
