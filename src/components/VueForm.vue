@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div v-if="!isPageVisible" class="container">
     <div class="container-wrapper">
       <h1>Barriere Architettoniche - Sif 75%</h1>
       <hr />
@@ -23,6 +23,7 @@
             class="input-field"
             :class="{errorsMessage: errors[field.name as keyof Data]}"
             v-model="data[field.name as keyof Data]"
+            :disabled="!isFieldDisabled(field.name)"
           />
           <p v-if="errors[field.name as keyof Data]" class="error-message">
             {{ errors[field.name as keyof Data] }}
@@ -126,7 +127,7 @@
       <div class="send-request">
         <button
           class="request-button"
-          :disabled="!enableButton"
+          :disabled="!enableButton || !isImageMax"
           @click="sendRequest"
         >
           Invia richiesta
@@ -134,16 +135,22 @@
       </div>
     </div>
   </div>
+  <SummaryPage :data="data" v-if="isPageVisible" />
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+
 import { customerData } from "@/constants";
 import { requestType } from "@/constants";
 import { customerSchema } from "@/schema";
-import router from "@/router";
 import type { Data } from "@/types";
-import { computed, onMounted, ref, watch } from "vue";
 import "@/components/VueForm.css";
+import SummaryPage from "./SummaryPage.vue";
+
+const route = useRoute();
+const isPageVisible = ref(false);
 
 const errors = ref<Record<keyof Data, string>>({
   customerName: "",
@@ -182,14 +189,27 @@ onMounted(() => {
   }
 });
 
+const isFieldDisabled = (fieldName: string) => {
+  const params = new URLSearchParams(window.location.search);
+  const cn = params.get("cn");
+  const cs = params.get("cs");
+
+  if (fieldName === "customerName" && cs) {
+    return false;
+  }
+  if (fieldName === "customerLastName" && cn) {
+    return false;
+  } else {
+    return true;
+  }
+};
+
 const handleSelectChange = (requestTypeName: string) => {
   options.value = requestType.selections.find(
     (el) => el.name === requestTypeName
   )!.options;
 };
 const options = ref<{ name: string; label: string; value: string }[]>([]);
-
-const fileInput = ref<HTMLInputElement>();
 
 const enableButton = computed(() => {
   return (
@@ -202,6 +222,16 @@ const enableButton = computed(() => {
   );
 });
 
+const isImageMax = computed(() => {
+  const maxSize = 6 * 1024 * 1024;
+  const totalFileSize = data.value.customerImage.reduce(
+    (acc, curr) => acc + curr.size,
+    0
+  );
+  return totalFileSize <= maxSize;
+});
+
+const fileInput = ref<HTMLInputElement>();
 const uploadDocument = () => {
   fileInput.value!.click();
 };
@@ -214,16 +244,21 @@ const handleFileUpload = (event: Event) => {
   const maxSize = 6 * 1024 * 1024;
 
   const validFiles = ["application/pdf", "image/jpeg", "image/png"];
-  const largeFile = selectedFiles.filter((file) => file.size > maxSize);
   const invalidFileTypes = selectedFiles.filter(
     (file) => !validFiles.includes(file.type)
   );
 
-  if (largeFile.length > 0) {
-    errors.value.customerImage = "file supera la dimensione massima di 6MB.";
+  const totalFileSize = data.value.customerImage.reduce(
+    (acc, curr) => acc + curr.size,
+    0
+  );
+  const newFilesSize = selectedFiles.reduce((acc, curr) => acc + curr.size, 0);
+
+  if (totalFileSize + newFilesSize > maxSize) {
+    errors.value.customerImage =
+      "Tutti i file non devono superare la dimensione massima di 6MB.";
     return;
   }
-
   if (invalidFileTypes.length > 0) {
     errors.value.customerImage =
       "File non valido. Formati accettati: PDF, JPG, JPEG, PNG.";
@@ -258,19 +293,7 @@ const sendRequest = () => {
     console.log("Validation errors:", errors.value);
     return;
   }
-
-  router.push({
-    path: "/summary",
-    query: {
-      customerName: data.value.customerName,
-      customerLastName: data.value.customerLastName,
-      customerEmail: data.value.customerEmail,
-      customerPhone: data.value.customerPhone,
-      customerNegozio: data.value.customerNegozio,
-      requestType: data.value.requestType,
-      requestSpecific: data.value.requestSpecific,
-    },
-  });
+  isPageVisible.value = true;
 };
 
 watch(data.value, (newVal, oldVal) => console.log(newVal));

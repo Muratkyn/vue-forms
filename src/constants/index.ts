@@ -26,7 +26,6 @@ export const customerData: CustomerField[] = [
 export const requestType: RequestType = {
   name1: "motivo1",
   name2: "motivo2",
-
   label1: "Seleziona motivo di richiesta",
   label2: "Specifica",
   selections: [
